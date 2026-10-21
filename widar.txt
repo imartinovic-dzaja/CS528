@@ -1,0 +1,90 @@
+1. Introduction
+
+Widar - WiFi based tracking system that simultaneously estimates a human's moving velocity and location at a decimeter level
+
+Location awareness is a key enabler for a wide range of applications such as smart homes, virtual reality, augmented reality, security monitoring, and asset management. 
+
+Traditional approaches track a user in an active manner via devices such as smartphones or wearable sensors attached to users [7, 12]. These approaches, however, pose inconvenience since users need to wear or take specific devices and thus are inapplicable in some scenarios such as security surveillance.
+
+Other approaches work passively with infrastructure installed in the area of interests, such as cameras and wireless sensor
+networks (WSNs)
+
+Recent innovations in wireless communications shed light on
+passive human sensing with Wi-Fi signals. In principle, these works exploit the phenomenon that human motions distort multipath profiles during signal propagation. These RF based approaches are more attractive than previous solutions since they do not require the user to carry a device, support omnidirectional coverage even in Non-Line-Of-Sight (NLOS) scenarios, and preserve user privacy gracefully
+
+Limitations of existing works. Existing works, however, cannot track fine-grained human mobility information (including speed,
+direction and location). Specifically, they do not quantitatively
+model the relationships between signal features and human mobility. Instead, most of them employ learning techniques for gesture
+and activity recognition by seeking appropriate statistical features
+of Wi-Fi signals [10, 18, 19]. The key limitations are that they only
+recognize pre-defined gestures and activities and usually require
+prior training
+
+Widar measures the instantaneous velocity (both speed and direction), in order to track fine-grained continuous locations. Instead of applying statistical learning techniques, Widar achieves these goals by deriving velocities and locations both directly from the Channel State Information (CSI) of Wi-Fi signals 
+
+2. Preliminary
+
+Uses channel state information: 
+Todays routers used so called MIMO (Multiple Input - Multuple Output) 
+antenna array (i.e. multiple emmiting and multiple receiving antennas)
+
+If a receiver emmits signals X(f,t) and receiver receives signals Y(f,t) then CSI will be the stuff that happens in-between, such as the mixing of signals and the medium's response to the signals. Their relationship will be:
+Y(f,t) = X(f,t) X H(f,t) + N
+where H is the complex channel frequency response 
+N is the noise 
+
+Through the Doppler Shift, using the CSI the Paper then describes a method for extracting the Path Length Change Rate (PLCR) i.e. rate of change of each signal propagation path length 
+However, CSI is polluted by unknown phase shifts which is caused by residue frequency and time offsets of imperfect hardwares. To eliminate the unknown shift, CARM [18] calculates the CSI power (i.e. conjugate
+multiplication of CSI) and extract PLCR through frequency domain
+
+2.3 Challenges for tracking
+This is sufficient for  model described above is helpful for activity recognition when approximating human velocity as a fixed function of PLCR, which is, however, insufficient for tracking. To track with CSI, they identified three challenges: 
+1) From PLCR to target velocity. As PLCR only reflects the Doppler frequency shifts, it is not real velocity of the moving target. Instead, both target velocity and location jointly determine the PLCR of the target reflecting path. 
+2) Loss of the sign. While CSI power excludes unknown phase offsets, it also loses the sign of frequency shifts due to conjugate multiplication. Because of this we are unable to determine the direction of the motion of the reflector (human).
+3)Interference terms. As shown in Equation 3, CSI contains irrelevant multipath components, the CSI power, as conjugate multiplication of itself, may contain irrelevant cross-terms, unwanted frequency shift terms and time-variant power terms that severely interfere with the targeted frequency shift components for tracking. Specifically, when a person walks, not only the torso but also other moving body parts reflect significant signal power, resulting in multiple reflection component
+
+3. Modeling of CSI-Mobility
+consider the geometrical constraints beteen reflection paths and human movement
+
+3.1 The ideal case
+First assume that the PLCR sign is available
+Using a geometric model of the transmitter and receiver being the foci of an ellipse the paper discusses how one can determine the ellipse on which the target is located, as well as its radial velocity on the ellipse. Using two links (emmiter-receiver pairs) we can determine the exact velocity of the reflector. Adding more links increases the accuracy in case of PLCR measurement errors.
+
+3.2 The Real Model
+In practice the signs of PLCRs are unknown. This causes the two link model to have 4 possible velocities, and the three and higher link models to have 2 possible velocities. This ambiguity can be solved as long as the sign of PLCR of any link is known. This is done using a system called WirDir or by introducing constrains based on the continuity of human movement in the real world (e.g. humans usually don't switch direction more rapidly than the sampling rates of the devices). 
+
+4. -> Just a bunch of details ... not too important
+
+5.1. Movement detection
+Velocity estimation should be performed only when a person is walking nearby. Widar monitors its spectograms. If it finds a large enough change in variance in of the power distribution of a frequency spectrum in the last two seconds before the user starts moving it will start tracking human movement. 
+
+5.2. Initial Location Estimation
+Specifically, Widar first searches through the whole tracking area at a coarse resolution, identifying a location that yields the least fitting error of the trace, as the initial location. Then, Widar searches through the narrowed area around the initial location at a fine-grained resolution to refine the initial location accuracy. This search step can be iterated until the fitting error achieves the minimum.
+
+5.3. Successive Tracking
+The position is then updated as l_final = l_initial + v_estimated * deltaT
+
+5.4. Pseudo-calibration -> to avoid error accumulation Widar occasionally re-initializes the tracking process
+Sometimes during real tracking, some links yield wrong PLCRs. To combat this Widar also employs a mothod for selecting Antennas. 
+
+6. Evaluation
+6.1. Experiment Methodology
+->Use 3 off-the shelf mini-desktops with Intel 5300 NIC's
+->One is a emmiter, the 2 others have 3 external antennas and act as receivers
+->this ends up being 6 links
+
+->they set up the links in 2 different ways
+->tracking area was 4x4 meters
+->used external camera to track "ground truth" position
+
+6.2 Overall Performance:
+Velocity Tracking -> Widar Outperformed single-link systems using PLCR as their only measurement. Widar outperformed the WirDir in terms of velocity direction estimation. 
+Performance in Location Tracking - With the starting location, accross all paths Widar achieved a tracking error of 25cm. Without the starting location accuracy was around 38cm. 
+Accuracy degrades when subject moves further away from the links (up to 78cm). 
+
+6.3. Parameter Study
+Impact of walking direction -> no imact, Widar can handle it
+Impact of walking distance -> impacted, the further the target walks, the greater error accumulation there is (went from 10cm to 61cm when subject walked from 1 to 10m)
+Impact of deployment -> Widar achieves consistent accuracy across both deployment methods
+Impact of human diversity -> not impacted
+Impact of packet transmission rate -> only a slight decrease with lower transmission rates

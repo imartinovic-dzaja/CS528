@@ -1,0 +1,280 @@
+Abstract:
+All previous work requires extra training for each new domain that is introduced
+Widar3.0 is having none of that. It is a Wi-Fi based zero-effor cross-domain gesture recognition system. It requires one-time training, but can adapt to different data domains
+
+Without re-training Widar 3.0 achieves a 92.7% in domain recognition accuracy and a 82.6%-92.4% cross domain recognition accuracy. This outperforms other state-of-the-art solutions.
+
+Introduction
+Human gesture recognition is the core enabler for a wide range of
+applications such as smart home, security surveillance and virtual
+reality. Traditional approaches use cameras [16, 24, 42], wearable
+devices and phones [8, 17, 36] or sonar [22, 29, 48] as the sensing
+module. While promising, these approaches pose inconvenience
+due to their respective drawbacks including leakage of privacy, requirement
+of on-body sensors and limit of sensing range. The need
+for secure, device-free and ubiquitous gesture recognition interface
+has triggered extensive research on sensing solutions based on commodity
+Wi-Fi.
+
+Specifically, due to lack of spatial resolution, wireless
+signals, and their features as well, are highly specific to environment
+where the gesture is performed, and the location and orientation
+of the performer,
+For brevity, we unitedly term
+these factors irrelevant to gestures as domain. As a result, the classifiers
+trained with primitive signal features in one domain usually
+undergo drastically drop in accuracy with another domain.
+correlated
+with continuous location and orientation of a person, Wi-Fi signals
+have infinite number of domains, making cross-domain training
+approaches practically prohibitive.
+
+However, we face three major technical challenges to achieve a
+one-fits-all model. First, previously used signal features (e.g., amplitude,
+phase, Doppler Frequency Shift(DFS)), as well as their statistics
+(e.g., max, min, mean, distribution parameter), are absolutely
+domain-dependent, meaning that their values vary with different
+locations, orientations and environments even for the same gesture.
+Second, it is difficult, for radio signals from only several links, to
+describe human gestures and actions. For example, kinetic profile
+of a single gesture still has hundreds of variables, posing the estimation
+of kinetic profile as a highly under-determined problem. Third,
+cross-domain generalization often requires sophisticated learning
+models (e.g., deeper networks, a larger number of parameters, a
+more complex network structure and more complicated loss functions),
+which slow down or even obstruct training, over-consume
+training data, and make the model less explainable.
+To overcome these challenges, we propose Widar3.0, a Wi-Fi
+based gesture recognition system. Widar3.0 uses channel state information
+(CSI) portrayed by COTS Wi-Fi devices. Our prior efforts,
+Widar [32] and Widar2.0 [33] track coarse human motion status,
+e.g., location and velocity, by regarding a person as a single point.
+Widar3.0, however, aims at recognizing complex gestures that involve
+multiple body parts. The key component of Widar3.0 is our
+novel theoretically domain-independent feature body-coordinate velocity
+profile (BVP) that describes power distribution over different
+velocities, at which body parts involved in the gesture movements.
+Our observation is that each type of gestures has its unique velocity
+profile in the body coordinate system (e.g., the coordinates
+where the orientation of the person is the positive x axis) no matter
+in which domain is the gesture performed. To estimate BVP, we
+approximate BVP from several prominent velocity components
+and further employ compressive sensing techniques to derive accurate
+estimates. On this basis, we devise a learning model to capture
+spatial-temporal characteristics of gestures and finally classify
+gestures. 
+
+In a nutshell, our core contributions are three-fold. First, we
+present a novel domain-independent feature that captures bodycoordinate
+velocity profiles of human gestures at the lower signal
+level. BVP is theoretically irrespective of any domain information
+in raw Wi-Fi signals, and thus acts as a unique indicator for human
+gestures. Second, we develop a one-fits-all model on the basis
+of domain-independent BVP and a learning method that fully exploits
+spatial-temporal characteristics of BVP. The model enables
+cross-domain gesture recognition without any extra effort of data
+collection or model re-training. Third, though trained only once,
+Widar3.0 achieves on average 89.7%, 82.6%, and 92.4% recognition
+accuracy across locations, orientations, and environments, respectively,
+which outperform the state-of-the-art solutions that require
+re-training in new target domains. Such consistently high performance
+demonstrates its strong ability of cross-domain generalization.
+
+2.0
+Due to lack of spatial resolution wireless signals are highly formatted by domain characteristics.
+Either or not to some extent enabling cross-domain sensing, existing
+wireless sensing solutions have significant drawbacks in their
+feature usage. The three main types of features are listed as follows:
+Primitive features without cross-domain capability. Most
+state-of-the-art activity recognition works extract primitive statistical
+(e.g., power distribution, waveform) or physical features (e.g.,
+DFS, AoA, ToF) from CSI [46]. However, due to different locations
+and orientations of the person and multipath environments, features
+of the same gesture may vary significantly and fail to serve
+successful recognition.
+Cross-domain motion features for coarse tracking. Devicefree
+tracking approaches [26, 33] build quantitative relation between
+physical features of signal and the motion status of the
+person, and enable location and velocity measurement across environments.
+However, these works regard a person as single point,
+which is infeasible for recognizing complex gestures that involve
+multiple body parts.
+
+Latent features from cross-domain learning methods. Crossdomain
+learning methods such as transfer learning [50] and adversarial
+learning [20] latently generate features of data samples in
+the target domain, either by translating samples from the source
+domain, or learning domain-independent features. However, these
+works require extra efforts of collecting data samples from the
+target domain and retraining the classifier each time new target
+domains are added.
+
+3 Overview of Widar3.0
+The major parts of Widar3.0 are two modules, the BVP generation
+module and the gesture recognition module.
+
+BVP generation module. Widar3.0 first prepares three intermediate
+results: DFS profiles, the orientation and location information of
+the person. DFS profiles are estimated by applying time-frequency
+analysis to CSI series. The orientation and location information of
+the person is calculated via motion tracking approaches. Thereafter,
+Widar3.0 applies the proposed compressed-sensing-based optimization
+approach to estimate BVP of each CSI segment. The BVP series
+is then output for following gesture recognition.
+
+The gesture recognition module implements a deep learning
+neural network (DNN) for gesture recognition. With the BVP series
+as input, Widar3.0 performs normalization on each BVP and across
+the whole series, in order to remove the irrelevant variations of
+instances and persons. Afterwards, the normalized BVP series is
+input into a spatial-temporal DNN, which has two main functions.
+First, the DNN extracts high-level spatial features within each BVP
+using convolutional layers. Then, recurrent layers are adopted to
+perform temporal modeling of inter-characteristics between BVPs.
+Finally, the output of the DNN is used to indicate the type of the
+gesture performed by the user. In
+
+
+4. Body-Coordinate Velocity Profile (BVP)
+Intuitively, human activities have unique velocity distributions
+across all body parts involved, which can be used as activity indicators.
+Among all parameters (i.e. ToF, AoA, DFS and attenuation) of
+the signal reflected by the person, DFS embodies most information
+of velocity distribution. Unfortunately, DFS is also highly correlated
+with the location and orientation of the person, circumventing
+direct cross-domain activity recognition with DFS profiles.
+
+They use the same process as Widar2.0 for extracting the DFS profile, based on which they derive a domain-independent BVP.
+
+When a person performs a gesture, his body parts (e.g., two hands,
+two arms and the torso) move at different velocities. As a result,
+signals reflected by these body parts experience various DFS, which
+are superimposed at the receiver and form the corresponding DFS
+profile. As discussed in § 2, while DFS profile contains the information
+of the gesture, it is also highly specific to the domain. In
+contrast, the power distribution over physical velocity in the body
+coordinate system of the person, is only related to the characteristics
+of the gesture. Thus, in order to remove the impact of domain,
+BVP is derived out of DFS profiles.
+
+4.2 From DFS to BVP
+some complex math, but the gist is if they know where the person is and how they are orientated, they can transform the coordinates so that they use the persons's body coordinates, where the direction the person faces is the positive x-direction.
+
+When a person performs a gesture, his body parts (e.g., two hands,
+two arms and the torso) move at different velocities. As a result,
+signals reflected by these body parts experience various DFS, which are superimposed at the receiver and form the corresponding DFS profile. As discussed in § 2, while DFS profile contains the information of the gesture, it is also highly specific to the domain. Knowing the persons' position and direction allows us to decouple this information and create a unique BVP.
+
+To create a un-ambiguous BVP one must have at least 3 links. More can be used to avoid edge-case ambiguities in estimating the BVP when certain conditions are met.
+
+4.4 Location and Orientation Prerequisites
+Uses previous systems such as LiFS IndoTrack and Widar2.0 to estimate location and orientation of the person.
+
+5. Recognition Mechanism
+They use a Deep Neureal Network learning model to mining the spatialtemporal characteristics of the BVP series. 
+the
+BVP series is first normalized to remove irrelevant variations caused
+by instances, persons and hardware settings (§ 5.1). The normalized
+output is then input into a hybrid deep learning model, which from
+bottom to top consists of a convolutional neural network (CNN)
+for spatial feature extraction (§ 5.2) and a recurrent neural network
+(RNN) for temporal modeling.
+
+5.1 BVP Normalization
+While BVP is theoretically only related to gestures, two practical
+factors may affect its stability as the gesture indicator. First, the
+overall power of BVP may vary due to the adjustment of transmission
+power. Second, in practice, instances of the same type of
+gesture performed by different persons may have different time
+length and moving velocities. Moreover, even instances performed
+by the same person may slightly vary. Thus, it is necessary to remove
+these irrelevant factors to retain the simplicity of the learning
+model.
+For signal power variation, Widar3.0 normalizes the element
+values in each single BVP by adjusting the sum of all elements in
+BVP to 1.
+
+5.2 Spatial Feature Extraction
+The input of the learning model, BVP data, is similar to a sequence
+of images. Each single BVP describes the power distribution over
+physical velocity during a sufficiently short time interval. And the
+continuous BVP series illustrates how the distribution varies corresponding
+to a certain kind of action. Therefore, to fully understand
+the derived BVP data, it is intuitive to extract spatial features from
+each single BVP first and then model the temporal dependencies of
+the whole series.
+CNN is a useful technique to extract spatial features and compress
+data
+
+5.3
+Besides local spatial features within each BVP, BVP series also contains
+temporal dynamics of the gesture. Recurrent neural networks
+(RNN) are appealing in that they can model complex temporal dynamics of sequences. For this they used GRU which a specific type of RNN capable of handling long-term dependecies.
+
+6 Evaluation
+6.1. Experiment Methodology
+Widar 3.0 -> One transmitter and at least 3 receivers
+3 in-door environments:
+1) Empty classroom furnished with desks and chairs
+2) Spacious hall
+3) Office room with furniture such as a sofa and tables
+Sensing area is a 2x2 meter square
+Assume only 1 person is in the sensing area
+1 transmitter and 2 receivers placed in corners of sensing area
+other receivers may be placed randomly
+Transcievers placed at height of 110cm
+16 volunteers with heights varying from 155cm to 185cm used
+
+Dataset:
+collect gesture data from 5 locations and 5 orientations in each sensing area
+Two types of datasets collected
+Specifically, the first dataset consists of common hand
+gestures used in human-computer interaction, including pushing
+and pulling, sweeping, clapping, sliding, drawing circle and drawing zigzag.
+The second dataset is collected for a case study of more complex and semantic gestures.
+
+6.2 Overall Accuracy
+92.7% accuracy wiht 90-10 percentage data collected in Room 1 used for training and testing respectively. For all gestures accuracy was at least 85%.
+
+Subjects then instructed to perform a random gesture, which made accuracy drop to 90.1% ... Widar3.0 can differentiate the unknown class with an accuracy of 87.1%.
+
+Accuracy degrades when gesture is directly in front of the user torso and is hence blocked (such as the push-pull gesture). Widar 3.0 is also designed to sense horizontally directed gestures ... so when a gesture has vertical components such as "drawing a cricle". 
+
+Case Study -> volunteers asked to draw numbers 0-9. 5000 samples 9:1 train/test ratio. Accuracy ofver 90% for 8 gestures. Avg Accuracy 92.9%.
+
+6.3 Cross-Domain Evaluation
+Location Independence -> avg accuracy for all location (within the same room) that were not involved in testing were above 85%. Best accuracy at the center of the room ... worst when subject is far away from sensors.
+
+Orientation Sensitivity -> accuracy around 90%. Worse orientations are ones where gestures are shadowed by human body.
+
+Environment diversity -> avg over 87% ... Widar3.0 is robust to it
+
+Person Variety -> accuracy over 85% across 7 persons
+
+6.4 Method Comparison 
+Widar3.0
+achieves better performance with the state-of-the-art cross-domain
+learning methodologies, EI and CrossSense, and it does not require
+extra data from a newdomain or model re-training. In contrast, both
+feature and learning model of CARM do not have cross-domain
+capability, which is the main reason for its significantly lower recognition
+accuracy.
+
+Comparison of input features -> BVP outperforms denoised CSI and DFS in accuracy. The performance improvement of BVP attributes its immunity to changes of layouts of transcievers.
+
+Comparison of learning model structures -> CNN-GRU outperforms simple GRU, and two-convolutional layer CNN-GRU and CNN-Hierarchichal-GRU model
+
+6.5. Parameter Study 
+Impact of link numbers ->  Increased accuracy with increased number of links. For 3-6 links accuracy ranges from 80 to 90%. With 2 links accuracy drops signifcantly to 70%. 
+
+Impact of location and orientation estimation error -> accuracy remains over 90% when location error is within 40cm, but then drops. Accuracy gradually drops with higher oreintation errors. 
+
+Impact of training set diversity -> the average gesture recognition accuracy drops from 89% to 74% when the number of people used for training drops from 7 to 1
+
+Impact of trasmission rates -> with rates between 1000Hz and 250 Hz the accuracy was always above 85%
+
+7 Discussion 
+User height -> even though widar3.0 was designed to pick-up 2-d BVP it was able to recognize gestures with 3-d components 
+
+Applications beyond gesture recognition -> can be used to recognize movements over the whole body hence is envisioned to be used in other sensing scenarios such as macro activity recognition, gait analysis and user identification.
+
+8. Related Work

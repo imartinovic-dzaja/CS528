@@ -1,0 +1,198 @@
+Abstract
+-> WiFi based system that enables passive human localization and tracking using single link 
+-> levarages multi-dimensional signal parameters from one signle link
+-> develops model which accounts for Angle-of-Arrival, Time-of-Flight and Doppler shifts
+
+Introduction
+As an early attempt of passive tracking, Widar [21] aggregrates
+DFS of CSIs from multiple links, but leaves richful features within
+CSI unaddressed. In this paper, we present a subsequent work -
+Widar2.0-, aimed at passive human tracking with only a single
+pair of COTS WiFi devices (e.g., one access point plus one client),
+without support from any additional infrastructure or inertial sensors.
+
+How to simultaneously and jointly estimate multiple parameters with
+limited bandwidth and small antenna array (typically only three on
+COTS WiFi devices)? How to clean unpredictable phase noises contained
+in CSI measurements? How to derive fine-grained locations
+from the low-resolution parameters of a single link, which could be
+very noisy and erroneous? We overcome all these challenges and
+propose Widar2.0, a system that realizes the above goal
+
+Second, we eliminate random phase noises between packets
+via conjugate multiplication of CSI from collocated antennas on
+the same radio (e.g., the receiver). It is well-known that CSI measurements
+on COTS WiFi devices suffer from severe phase noises
+stemming from timing offset and carrier frequency offset. To handle the noises, previous works proposed to apply linear fitting over
+multiple subcarriers for calibration [13, 25]. However, this method
+is not applicable in passive tracking because reflection signals are
+orders of magnitudes weaker than static signals, and the residual
+error after calibration is still strong enough to obfuscate reflection
+signals of interest. In contrast, we propose a novel method using
+the conjugate multiplication of CSI measurements, which renders
+an offset-free form of CSI. The rationale lies in that a pair of collocated
+antennas on one radio device undergo identical phase noises
+from channel, which can thus be removed out by conjugate multiplication. The resulted conjugate multiplied version of CSI is not
+polluted with phase noises while can still be leveraged for multiple
+parameter estimation using the proposed algorithm.
+
+Third, we propose novel algorithms to derive precise locations
+from erroneous parameter estimates. Our parameter algorithm
+outputs cluttering parameters of multiple reflections. To locate
+the target of interest, we devise a novel graph-based algorithm to
+accurately identify the parameters corresponding to the target’s
+reflection from cluttering multipath parameters. In principle, tracking
+can then be simply enabled by geometric deduction based on
+AoA and ranges derived from ToF. However, due to fundamental
+limits in bandwidth, ranges obtained from inaccurate ToF are not
+accurate enough for fine-grained tracking. Potential range precision
+gains lie in combining ToF estimates with relative distance
+changes calculated from DFS. By doing this, we improve the range
+estimation resolution from 0.3 m to 0.05 m, underlying the solid
+foundation for precise localization.
+
+We have implemented Widar2.0 on commodity WiFi devices,
+i.e., one single antenna AP as transmitter and a laptop with three
+antennas as receiver, both equipped with Intel 5300 NICs for CSI
+collection.We evaluate Widar2.0 in three different indoor scenarios
+and compare it with two state-of-the-art methods namely IndoTrack
+[17] and DynamicMusic [16]. Experimental results show that, using
+a single WiFi link, Widar2.0 achieves a median accuracy of about
+0.75 m in a 6 m × 5 m tracking area, better than DynamicMusic and
+comparable with IndoTrack.
+
+Overview:
+A key insight underlying the possibility is to seek for multiple
+signal parameters from a single link rather than using single
+parameter from multiple links. As shown in Figure 2, we achieve
+this in Widar2.0 by two key modules, namely CSI-Motion module
+and Motion Tracking module.
+
+As shown in Figure 2, we achieve
+this in Widar2.0 by two key modules, namely CSI-Motion module
+and Motion Tracking module.
+The CSI-Motion module conducts joint multiple parameters estimation
+of multipath signals from noisy CSIs. Upon receiving
+CSI measurements, Widar2.0 first cleans them. The objectives of
+CSI cleaning are two-fold: 1) eliminating random CSI phase noises
+caused by asynchronous transceivers, and 2) surpassing strong signals
+from static paths, e.g. the LoS path, and amplifying signals
+reflected by moving target. Thereafter, Widar2.0 applies the proposed
+parameter estimation algorithm to obtain multidimensional
+parameters (ToF, AoA, DFS, and attenuation) of multipath signals.
+The Motion-Tracking module calculates the target locations from
+multiple signal parameters estimates. First, Widar2.0 identifies parameters
+of interest corresponding to the signal reflected by the
+moving target from cluttering estimates via path matching module.
+Then, the ToF and DFS are fused through a Kalman Smoother to
+refine distance estimates in range refinement module. Finally, the
+estimated distance and AoA are fed into the localization framework
+to derive the location of the moving target.
+
+Nevertheless, in case
+more receivers are available, further accuracy gains would be obtained
+by combining the location estimations of different receivers.
+
+3.2 Joint Mutliple Parameter Estimation
+We formulate the problem of joint multiple parameter estimation as
+a maximum likelihood estimation (MLE) problem and designs algorithm
+for parameter estimate with CSI
+
+Obviously, the function is non-linear and no closed-form solution
+exists. Furthermore, the direct search of ΘML is computationally
+prohibitive due to the high dimension of Θ (i.e. 4L) for large L.
+In order to solve the problem efficiently, we apply the Space
+Alternating Generalized Expectation Maximization (SAGE) algorithm
+[8] that reduces the overall search space
+
+CSI Cleaning
+They first attempted using the SpotFi ToF sanitaziation algorithm which didn't work with passive tracking because of two reasons
+1) SpotFi localizes active devices and only needs to estimate
+the LoS signal between transceivers, which is usually much stronger
+than human-induced reflections.
+2) Second, SpotFi’s ToF sanitization algorithm removes the absolute
+ToF of the LoS signal, since the phases contributed by ToF are also
+linear across subcarriers. As a result, the absolute ToF of any path cannot be obtained, and
+the target cannot be localized with only AoA of single device.
+
+The method of conjugate multiplication of CSIs for phase calibration
+is first proposed in WiDance [22], and then used in IndoTrack
+[17] for tracking. However, these works only focus on
+estimate of DFS, while Widar2.0 addresses all signal parameters for tracking.
+
+4. Localization:
+While the parameter estimation algorithm yields multidimensional
+signal parameters from the cleaned CSI, these estimates are typically
+erroneous due to multipath effects and low resolution.
+In order to overcome noises in the cluttering multipath parameters,
+we propose a graph-based path matching (GPM) algorithm that
+simultaneously matches successive multiple segments.
+The constraints in Equation 15, 16, 17, 18, together with the
+objective function in Equation 13, form a binary integer program
+(BIP) problem, and can be solved via BIP solvers like YALMIP.
+Then, we match the rest estimations (with even indices)
+with their adjacent estimations using Hungarian algorithm.
+
+4.2 Range Refinement
+Theoretically,the relative range between the reflection path and
+the LoS path can be calculated by multiplying estimated ToF with
+the speed of light. However, the estimated range may suffer from
+strong noises and low resolution of ToF.
+
+To refine range estimation, we combine absolute yet coarsegrained
+ToF and fine-grained yet relative DFS, and propose an
+efficient smoothing algorithm.
+we adopt a Kalman Smoother (KS)
+to refine ranges from ToF estimations with the change rates of
+path range from DFS estimations.
+
+4.3 Localization Model
+Similar to Widar, Widar2.0 uses a localization model where the emmiter and receivers are at focal points of an ellipse. Becuase Widar2.0 has AoA and ToF in addition to DFS information, using geometry it can produce a unique solution for the location of the object (human) being tracked. 
+
+5. Evaluation
+Experiment: Pair of off the shelf (OTS) laptops
+Transmitter -> one antenna
+Receiver -> three antennas
+Transmitter and receiver placed in two adjecent corners of tracking areas
+3 indoor environments -> 
+	1) large empty classroom
+	2) small office with furniture
+	3) narrow corridor
+
+In classroom setting they used 2 receivers placed orthogonally to test out improvements in accuracy
+
+6 volunteers walking in different trajectories
+Ground truth via video-based tracking system
+
+5.2 Performance
+Avg. Localization error of 0.75m with single WiFi link
+Two links -> 0.63m avg error
+
+Widar2.0 Significanlty outperforms Dynamic Music which only uses AoA 
+Widar2.0 does slightly worse than IdnoTrack which has a localization error of 0.48m. However Widar2.0 is much better at avoiding error accumulation with increasing walking distance.
+
+5.3 Parameter Study
+Walking direction -> using single link there was a high degradation in localization error when subjects walked parallel with the the link. This is because the DFS of reflection signals becomes smaller. Two links proves much more accurate at addressing different walking directions, because the links are placed orthogonally and it is impossible to move parallel to both of them (unless you are floating directly upwards).
+Walking distance -> Widar2.0 is much better than its predecessor at handling long walking distances (discussed in a previous part). 
+
+As packet rates decrease, the errors increase exponentially. 
+
+Walking velocity -> Location arror is stable (0.6m) for all velocities, yet gradually decreases as velocities increase. The observation is intuitive, since large walking velocity leads to large DFS at receivers, which may facilitate the calibration process to extract reflection signals. 
+Environment -> Widar2.0 is robust to multipath effect in indoor environments. However you will see performance degradation in larger tracking areas. This is due to the fact With larger tracking area, the
+signal reflected by targets tends to be weaker and more vulnerable
+to noises, leading to degradation of system performance.
+Second, distance between the transmitter and receiver (i.e. link
+length) also impacts the system performance. The larger the link length is the smaller the DFS is observed at the receiver, which degrades the system performance. 
+Human Diversity -> no impact
+Packet rate-> no impact ... Widar2.0 works with moderate packet rate and is practical with real Wi-Fi transmissions
+
+6. Discussions
+Multiple person tracking: We conduct preliminary experiments
+where two persons walks in the monitoring area. The results show
+that while Widar2.0 accurately estimates DFS and recognizes two
+persons, it fails to yield accurate AoA and ToF, and further track
+multiple persons.
+
+Tracking in NLoS condition: There must be a clear LOS between the emmiter and target, receiver and targer; and the emmiter and receiver. When these conditions are not satisfied Widar2.0 cannot give accurate estimations.
+
+Device Deployment -> how far apart the links are matters. Experimentally tested up to 6 meters. 
